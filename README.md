@@ -46,6 +46,36 @@ open index.html   # or just double-click it
 
 The fractal is defined by an iterative formula in spherical coordinates (the classic Mandelbulb power-8 formula, but adjustable). Instead of building a mesh, the fragment shader marches a ray from the camera through 3D space, using a distance estimator (DE) to know how far it can safely step forward without missing the surface — this is sphere tracing. When the ray gets close enough to the surface, that point is shaded using a normal estimated from the DE gradient, plus soft shadows and ambient occlusion sampled the same way.
 
+## The Math
+
+The Mandelbulb is the 3D analogue of the Mandelbrot set. Instead of iterating $z \leftarrow z^2 + c$ over complex numbers, we iterate over $\mathbb{R}^3$ using a spherical-coordinate generalization of the power operation.
+
+**Iteration.** For a point $c \in \mathbb{R}^3$, starting from $z_0 = c$:
+
+$$z_{n+1} = z_n^{\,p} + c$$
+
+where the power operation $z^p$ is defined by converting $z = (x, y, z)$ to spherical coordinates,
+
+$$r = |z|, \qquad \theta = \cos^{-1}\!\left(\frac{z_z}{r}\right), \qquad \phi = \operatorname{atan2}(z_y, z_x)$$
+
+then scaling the radius and multiplying the angles by the power $p$:
+
+$$z^{p} = r^{\,p} \big(\sin(p\theta)\cos(p\phi),\ \sin(p\theta)\sin(p\phi),\ \cos(p\theta)\big)$$
+
+A point $c$ belongs to the set if this sequence stays bounded (in `index.html` the loop bails out once $r > 2.2$). The **Power** slider is literally the exponent $p$ in this formula — at $p=8$ you get the "classic" Mandelbulb.
+
+**Sphere tracing needs a distance, not just in/out.** Since there's no mesh, the shader needs to know how far it can safely march the camera ray without stepping through the surface. This comes from a *distance estimator* (DE) derived from how fast the iteration's derivative grows. Alongside $z_n$, the shader tracks a running derivative magnitude $dr$:
+
+$$dr_0 = 1, \qquad dr_{n+1} = p \, r_n^{\,p-1} \, dr_n + 1$$
+
+and after $N$ iterations (or an early escape), the estimated distance to the fractal surface is:
+
+$$\text{DE}(c) \approx \frac{1}{2} \, \frac{r_N \ln r_N}{dr_N}$$
+
+That's the exact `0.5 * log(r) * r / dr` line in `mapDE()`. Sphere tracing then repeatedly steps the ray forward by this safe distance — never overshooting the surface, never wasting steps in empty space — until it converges (or the ray runs out of steps/distance).
+
+**Surface normals**, needed for shading, shadows, and ambient occlusion, come for free from the same DE: they're just its numerical gradient, sampled with tiny offsets around the hit point.
+
 ## Author
 
 **Gagan A Nair**
