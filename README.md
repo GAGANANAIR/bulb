@@ -35,7 +35,7 @@ open index.html   # or just double-click it
 | Drift button | Toggles automatic camera rotation |
 | Reset button | Restores default camera and parameters |
 
-##Images
+**Images**
 
 <img width="946" height="410" alt="image" src="https://github.com/user-attachments/assets/dbb365fa-986b-4791-8f0b-8bb2ab60905b" />
 
