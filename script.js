@@ -235,17 +235,63 @@
     juliaDial.style.display = (state.mode === 1) ? 'flex' : 'none';
   }
 
-  powerEl.addEventListener('input', () => { state.power = parseFloat(powerEl.value); vPower.textContent = state.power.toFixed(1); });
-  iterEl.addEventListener('input', () => { state.iter = parseInt(iterEl.value,10); vIter.textContent = state.iter; });
-  hueEl.addEventListener('input', () => { state.hue = parseFloat(hueEl.value); vHue.textContent = state.hue.toFixed(2); });
-  bloomEl.addEventListener('input', () => { state.bloom = parseFloat(bloomEl.value); vBloom.textContent = state.bloom.toFixed(2); });
-  dofEl.addEventListener('input', () => { state.dof = parseFloat(dofEl.value); vDof.textContent = state.dof.toFixed(2); });
-  jxEl.addEventListener('input', () => { state.jx = parseFloat(jxEl.value); vJx.textContent = state.jx.toFixed(2); });
-  jyEl.addEventListener('input', () => { state.jy = parseFloat(jyEl.value); vJy.textContent = state.jy.toFixed(2); });
+  // ---------------------------------------------------------------------
+  // Presets — named, ready-made looks (mode + power + hue + bloom + dof),
+  // so someone can just pick a style instead of hand-tuning every slider.
+  // ---------------------------------------------------------------------
+  const presetSelect = document.getElementById('presetSelect');
+  const PRESETS = {
+    classicGold:  { mode: 0, power: 8.0, hue: 0.08, bloom: 0.55, dof: 0.30, iter: 9  },
+    cosmicBlue:   { mode: 0, power: 6.5, hue: 0.58, bloom: 0.85, dof: 0.45, iter: 9  },
+    alienVenom:   { mode: 1, power: 8.0, hue: 0.30, bloom: 0.70, dof: 0.25, iter: 8, jx: 0.35, jy: 0.05 },
+    emberCore:    { mode: 3, power: 2.0, hue: 0.02, bloom: 1.10, dof: 0.55, iter: 8  },
+    voidCrystal:  { mode: 4, power: 8.0, hue: 0.62, bloom: 0.40, dof: 0.20, iter: 10 },
+    magmaBox:     { mode: 2, power: 10.0, hue: 0.03, bloom: 0.65, dof: 0.35, iter: 9 }
+  };
+
+  function applyPreset(name){
+    const p = PRESETS[name];
+    if (!p) return;
+    state.mode = p.mode;
+    state.power = p.power;
+    state.hue = p.hue;
+    state.bloom = p.bloom;
+    state.dof = p.dof;
+    state.iter = p.iter;
+    if (p.jx !== undefined) state.jx = p.jx;
+    if (p.jy !== undefined) state.jy = p.jy;
+
+    powerEl.value = state.power; vPower.textContent = state.power.toFixed(1);
+    iterEl.value = state.iter; vIter.textContent = state.iter;
+    hueEl.value = state.hue; vHue.textContent = state.hue.toFixed(2);
+    bloomEl.value = state.bloom; vBloom.textContent = state.bloom.toFixed(2);
+    dofEl.value = state.dof; vDof.textContent = state.dof.toFixed(2);
+    jxEl.value = state.jx; vJx.textContent = state.jx.toFixed(2);
+    jyEl.value = state.jy; vJy.textContent = state.jy.toFixed(2);
+    applyModeUI();
+    showToast(presetSelect.options[presetSelect.selectedIndex].textContent);
+  }
+
+  presetSelect.addEventListener('change', () => {
+    if (presetSelect.value) applyPreset(presetSelect.value);
+  });
+
+  // Any manual slider/mode tweak means we've drifted from the named
+  // preset, so fall back to "Custom" in the dropdown.
+  function markCustom(){ presetSelect.value = ''; }
+
+  powerEl.addEventListener('input', () => { state.power = parseFloat(powerEl.value); vPower.textContent = state.power.toFixed(1); markCustom(); });
+  iterEl.addEventListener('input', () => { state.iter = parseInt(iterEl.value,10); vIter.textContent = state.iter; markCustom(); });
+  hueEl.addEventListener('input', () => { state.hue = parseFloat(hueEl.value); vHue.textContent = state.hue.toFixed(2); markCustom(); });
+  bloomEl.addEventListener('input', () => { state.bloom = parseFloat(bloomEl.value); vBloom.textContent = state.bloom.toFixed(2); markCustom(); });
+  dofEl.addEventListener('input', () => { state.dof = parseFloat(dofEl.value); vDof.textContent = state.dof.toFixed(2); markCustom(); });
+  jxEl.addEventListener('input', () => { state.jx = parseFloat(jxEl.value); vJx.textContent = state.jx.toFixed(2); markCustom(); });
+  jyEl.addEventListener('input', () => { state.jy = parseFloat(jyEl.value); vJy.textContent = state.jy.toFixed(2); markCustom(); });
 
   modeBtn.addEventListener('click', () => {
     state.mode = (state.mode + 1) % MODE_NAMES.length;
     applyModeUI();
+    markCustom();
   });
 
   spinBtn.addEventListener('click', () => {
@@ -264,6 +310,7 @@
     vPower.textContent = '8.0'; vIter.textContent = '9'; vHue.textContent = '0.62';
     vBloom.textContent = '0.60'; vDof.textContent = '0.35';
     vJx.textContent = '0.35'; vJy.textContent = '0.05';
+    presetSelect.value = '';
     applyModeUI();
   });
 
